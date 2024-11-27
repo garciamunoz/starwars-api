@@ -1,0 +1,86 @@
+service: starwars-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  environment:
+    STAR_WARS_TABLE: StarWarsTable
+    TRANSLATE_TABLE: TranslateTable
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:Query"
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:Scan"
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STAR_WARS_TABLE}"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.STAR_WARS_TABLE}/index/*"
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TRANSLATE_TABLE}"
+
+functions:
+  getOrCreatePlanet:
+    handler: dist/controllers/swapiController.getOrCreatePlanet
+    events:
+      - http:
+          path: planet/{nombre}
+          method: get
+  createPlanet:
+    handler: dist/controllers/swapiController.createPlanet
+    events:
+      - http:
+          path: planet
+          method: post
+
+resources:
+  Resources:
+    StarWarsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.STAR_WARS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: nombre
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: NombreIndex
+            KeySchema:
+              - AttributeName: nombre
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    TranslateTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TRANSLATE_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+    host: localhost
+    noAuth: true
+    noPrependStageInUrl: true
+
+package:
+  exclude:
+    - src/**
+  include:
+    - dist/**
+    - node_modules/**

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS", // Asegúrate de esto
+    "target": "ES2018",   // Esto está bien, pero puede ser más bajo (e.g., ES6)
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": false
+  }
+}

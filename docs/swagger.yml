@@ -1,0 +1,146 @@
+openapi: 3.0.0
+info:
+  title: Star Wars API
+  description: API para gestionar información de planetas del universo de Star Wars.
+    Incluye funcionalidades para obtener información de planetas y crear nuevos.
+  version: 1.0.0
+servers:
+- url: https://<<APIG-ID>>.execute-api.us-east-1.amazonaws.com/dev
+  description: API desplegada en AWS API Gateway (entorno de desarrollo)
+- url: http://localhost:3000
+  description: API en entorno local con serverless-offline
+paths:
+  /planet/{nombre}:
+    get:
+      summary: Obtener un planeta por nombre
+      description: "Devuelve información de un planeta. Si el planeta no existe, lo\
+        \ obtiene de SWAPI y lo guarda en la base de datos con los atributos traducidos."
+      parameters:
+      - name: nombre
+        in: path
+        description: Nombre del planeta a buscar.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Información del planeta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "404":
+          description: Planeta no encontrado en la base de datos ni en SWAPI.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_404'
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+  /planet:
+    post:
+      summary: Crear un nuevo planeta
+      description: Crea un nuevo planeta en la base de datos con los datos proporcionados
+        en el cuerpo de la solicitud.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/planet_body'
+        required: true
+      responses:
+        "201":
+          description: Planeta creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_201'
+        "400":
+          description: Datos inválidos en la solicitud.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_400'
+        "500":
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+components:
+  schemas:
+    inline_response_200:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID único del planeta.
+        nombre:
+          type: string
+          description: Nombre del planeta.
+        clima:
+          type: string
+          description: Clima del planeta.
+        poblacion:
+          type: string
+          description: Población del planeta.
+    inline_response_404:
+      type: object
+      properties:
+        message:
+          type: string
+          example: El planeta 'X' no se encuentra en SWAPI.
+    inline_response_500:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Error interno del servidor.
+    planet_body:
+      type: object
+      properties:
+        nombre:
+          type: string
+          description: Nombre del planeta.
+          example: Dagobah
+        clima:
+          type: string
+          description: Clima del planeta.
+          example: pantano
+        poblacion:
+          type: string
+          description: Población del planeta.
+          example: desconocida
+    inline_response_201:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Planeta guardado exitosamente.
+        planeta:
+          type: object
+          properties:
+            id:
+              type: string
+              description: ID único del planeta.
+            nombre:
+              type: string
+              description: Nombre del planeta.
+            clima:
+              type: string
+              description: Clima del planeta.
+            poblacion:
+              type: string
+              description: Población del planeta.
+    inline_response_400:
+      type: object
+      properties:
+        message:
+          type: string
+          example: El atributo 'nombre' es obligatorio.
